@@ -1,0 +1,96 @@
+- hosts: all
+  tasks:
+    - name: add nvidia repo
+      apt_repository:
+        repo: 'ppa:graphics-drivers/ppa'
+      become: true
+    - name: fix locale
+      locale_gen:
+        name: en_US.UTF-8
+        state: absent
+      become: true
+    - name: add locale
+      shell: |
+        echo 'LANG="en_US.UTF-8"
+        LANGUAGE="en_US:en"' >> /etc/default/locale
+      become: true
+    - name: store vars
+      shell: |
+        echo "export DISPLAY=:0" >> ~/.bashrc && echo "export LC_ALL=C" >> ~/.bashrc
+      become: true
+    - name: "Update Cache"
+      command: apt-get update
+      become: true
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: dist
+    - name: install packages
+      apt: name={{item}} state=installed
+      with_items:
+        - software-properties-common
+        - git
+        - screen
+        - cmake
+        - libcrypto++-dev
+        - libleveldb-dev
+        - libjsoncpp-dev
+        - libjsonrpccpp-dev
+        - libboost-all-dev
+        - libgmp-dev
+        - libreadline-dev
+        - libcurl4-gnutls-dev
+        - ocl-icd-libopencl1
+        - opencl-headers
+        - mesa-common-dev
+        - libmicrohttpd-dev
+        - build-essential
+        - supervisor
+        - python3-pip
+      become: true
+    - name: update grub
+      shell: |
+        update-grub
+      become: true
+    - name: make aliases
+      shell: |
+        echo "alias python=python3.5" >> ~/.bashrc
+      shell: |
+        echo "alias pip=pip3" >> ~/.bashrc
+    - name: download drivers
+      get_url:
+        url: http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
+        dest: "{{ ansible_env.HOME }}"
+    - name: retreive key
+      apt_key:
+        url: http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
+        state: present
+      become: true
+    - name: install cuda drivers
+      apt: deb="{{ ansible_env.HOME }}/cuda-repo-ubuntu1604_9.1.85-1_amd64.deb"
+      become: true
+    - name: install nvidia drivers
+      apt: name=nvidia-390 state=present
+      become: true
+    - name: restart
+      shell: sleep 2 && shutdown -r now
+      async: 1
+      poll: 0
+      become: true
+      ignore_errors: true
+    - name: waiting for server to come back after reboot
+      local_action: wait_for host={{ ansible_ssh_host }} state=started port=22 delay=30 timeout=300 connect_timeout=15
+    - name: stop X server
+      systemd: state=stopped name=lightdm
+      become: true
+    - name: init nvidia config
+      shell: |
+        nvidia-xconfig -s -a --allow-empty-initial-configuration --cool-bits=12 --registry-dwords="PerfLevelSrc=0x2222" --no-sli --connected-monitor="DFP-0" -o /etc/X11/xorg.conf
+      become: true
+    - name: add overclock params
+      shell: |
+        sed -i '/Driver/a Option "Interactive" "False"' /etc/X11/xorg.conf && sed -i '/    Driver         "nvidia"/ a \ \ \ \ Option         "Coolbits" "28"' /etc/X11/xorg.conf
+      become: true
+    - name: reboot
+      shell: reboot
+      become: true
