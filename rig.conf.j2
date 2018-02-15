@@ -1,0 +1,9 @@
+server {
+    listen 80;
+    server_name {{ ansible_ssh_host }};
+
+    location / {
+        include uwsgi_params;
+        uwsgi_pass unix:/var/www/rig/socket.sock;
+    }
+}

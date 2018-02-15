@@ -47,6 +47,7 @@
         - build-essential
         - supervisor
         - python3-pip
+        - nginx
       become: true
     - name: update grub
       shell: |
@@ -91,6 +92,61 @@
       shell: |
         sed -i '/Driver/a Option "Interactive" "False"' /etc/X11/xorg.conf && sed -i '/    Driver         "nvidia"/ a \ \ \ \ Option         "Coolbits" "28"' /etc/X11/xorg.conf
       become: true
-    - name: reboot
-      shell: reboot
+    - name: restart
+      shell: sleep 2 && shutdown -r now
+      async: 1
+      poll: 0
       become: true
+      ignore_errors: true
+    - name: waiting for server to come back after reboot
+      local_action: wait_for host={{ ansible_ssh_host }} state=started port=22 delay=30 timeout=300 connect_timeout=15
+    - name: create overclock script
+      template:
+        src: overclock.sh.j2
+        dest: "{{ ansible_env.HOME }}/overclock.sh"
+        owner: "{{ ansible_ssh_user }}"
+        group: "{{ ansible_ssh_user }}"
+        mode: '0777'
+    - name: register autostart overclock script
+      template:
+        src: autostart.j2
+        dest: "{{ ansible_env.HOME }}/.config/upstart/overclock.sh"
+        owner: "{{ ansible_ssh_user }}"
+        group: "{{ ansible_ssh_user }}"
+        mode: '0777'
+    - name: restart
+      shell: sleep 2 && shutdown -r now
+      async: 1
+      poll: 0
+      become: true
+      ignore_errors: true
+    - name: waiting for server to come back after reboot
+      local_action: wait_for host={{ ansible_ssh_host }} state=started port=22 delay=30 timeout=300 connect_timeout=15
+    - name: remove default nginx vhost
+      file:
+        state: absent
+        path: /etc/nginx/sites-enabled/default
+      become: true
+    - name: create rig server host
+      template:
+        src: rig.conf.j2
+        dest: /etc/nginx/sites-enabled/rig.conf
+      become: true
+    - name: restart nginx
+      service: name=nginx state=restarted
+      become: true
+    - name: clone zecminer
+      git:
+        repo: 'https://github.com/paalomnikdev/zecminer.git'
+        dest: "{{ ansible_env.HOME }}/zecminer"
+    - name: clone claymore
+      git:
+        repo: 'https://github.com/paalomnikdev/claymore_dual_11.git'
+        dest: "{{ ansible_env.HOME }}/claymore_dual_11"
+    - name: create mining script
+      template:
+        src: start.sh.j2
+        dest: "{{ ansible_env.HOME }}/zecminer/start.sh"
+        owner: "{{ ansible_ssh_user }}"
+        group: "{{ ansible_ssh_user }}"
+        mode: '0777'
