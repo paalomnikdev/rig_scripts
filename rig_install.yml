@@ -1,4 +1,6 @@
 - hosts: all
+  vars:
+    master_node_address: 192.168.31.148
   tasks:
     - name: add nvidia repo
       apt_repository:
@@ -14,9 +16,13 @@
         echo 'LANG="en_US.UTF-8"
         LANGUAGE="en_US:en"' >> /etc/default/locale
       become: true
+    - name: disable system logs
+      shell: |
+        systemctl disable rsyslog.service
+      become: true
     - name: store vars
       shell: |
-        echo "export DISPLAY=:0" >> ~/.bashrc && echo "export LC_ALL=C" >> ~/.bashrc
+        echo "export DISPLAY=:0" >> ~/.bashrc && echo "export LC_ALL=C" >> ~/.bashrc && echo "export NO_AT_BRIDGE=1" >> ~/.bashrc
       become: true
     - name: "Update Cache"
       command: apt-get update
@@ -48,16 +54,21 @@
         - supervisor
         - python3-pip
         - nginx
+        - python-pip
       become: true
     - name: update grub
       shell: |
         update-grub
       become: true
-    - name: make aliases
+    - name: make alias for python
       shell: |
         echo "alias python=python3.5" >> ~/.bashrc
+    - name: make alias for pip
       shell: |
         echo "alias pip=pip3" >> ~/.bashrc
+    - name: get rid of bus errors
+      shell: |
+        echo "export NO_AT_BRIDGE=1" >> ~/.bashrc
     - name: download drivers
       get_url:
         url: http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
@@ -110,7 +121,7 @@
     - name: register autostart overclock script
       template:
         src: autostart.j2
-        dest: "{{ ansible_env.HOME }}/.config/upstart/overclock.sh"
+        dest: "{{ ansible_env.HOME }}/.config/upstart/overclock.conf"
         owner: "{{ ansible_ssh_user }}"
         group: "{{ ansible_ssh_user }}"
         mode: '0777'
@@ -150,3 +161,44 @@
         owner: "{{ ansible_ssh_user }}"
         group: "{{ ansible_ssh_user }}"
         mode: '0777'
+    - name: change ownership of www directory
+      file:
+        path: /var/www
+        owner: "{{ ansible_ssh_user }}"
+        group: "{{ ansible_ssh_user }}"
+      become: true
+    - name: clone server agent code
+      git:
+        repo: 'https://github.com/paalomnikdev/client.git'
+        dest: /var/www/client
+    - name: setup client settings
+      template:
+        src: settings.py.j2
+        dest: /var/www/client/settings.py
+    - name: install virtualenv
+      pip:
+        name: virtualenv
+      become: true
+    - name: init virtualenv and install requirements
+      pip:
+        requirements: /var/www/client/requirements.txt
+        virtualenv: /var/www/client/venv
+        virtualenv_python: python3.5
+    - name: create log dir
+      file:
+        path: /var/www/client/log
+        owner: "{{ ansible_ssh_user }}"
+        group: "{{ ansible_ssh_user }}"
+        state: directory
+    - name: create uwsgi.ini
+      template:
+        src: uwsgi.ini.j2
+        dest: /var/www/client/uwsgi.ini
+    - name: create supervisor config
+      template:
+        src: client.conf.j2
+        dest: /etc/supervisor/conf.d/client.conf
+      become: true
+    - name: restart supervisor
+      service: name=supervisor state=restarted
+      become: true

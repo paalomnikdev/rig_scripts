@@ -1,0 +1,8 @@
+[program:client]
+command=/var/www/client/venv/bin/uwsgi --master --emperor uwsgi.ini --die-on-term --uid {{ ansible_ssh_user }} --gid {{ ansible_ssh_user }}
+autostart=true
+autorestart=true
+directory=/var/www/client
+stderr_logfile=/var/log/client.err.log
+stdout_logfile=/var/log/client.out.log
+user={{ ansible_ssh_user }}

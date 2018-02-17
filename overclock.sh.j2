@@ -1,5 +1,6 @@
 #!/bin/bash
 export LC_ALL=C
+export DISPLAY=:0
 read -d "\0" -a number_of_gpus < <(nvidia-smi --query-gpu=count --format=csv,noheader,nounits)
 index=$(( number_of_gpus[0] - 1 ))
 for i in $(seq 0 $index)
