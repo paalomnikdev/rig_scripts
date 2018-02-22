@@ -4,6 +4,7 @@ server {
 
     location / {
         include uwsgi_params;
+        uwsgi_read_timeout 300;
         uwsgi_pass unix:/var/www/client/socket.sock;
     }
 }
