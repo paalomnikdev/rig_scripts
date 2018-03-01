@@ -1,5 +1,5 @@
 [program:client]
-environment=DISPLAY=:0,LC_ALL=C
+environment=DISPLAY=:0,LC_ALL=C,NO_AT_BRIDGE=1
 command=/var/www/client/venv/bin/uwsgi --master --emperor uwsgi.ini --die-on-term --uid {{ ansible_ssh_user }} --gid {{ ansible_ssh_user }}
 autostart=true
 autorestart=true
