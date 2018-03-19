@@ -1,0 +1,9 @@
+[program:miner]
+environment=DISPLAY=:0,LC_ALL=C,NO_AT_BRIDGE=1
+command=/var/www/client/miner.sh
+autostart=true
+autorestart=true
+directory=/var/www/client
+stderr_logfile=/var/log/miner.err.log
+stdout_logfile=/var/log/miner.out.log
+user={{ ansible_ssh_user }}
