@@ -97,11 +97,20 @@
       become: true
     - name: init nvidia config
       shell: |
-        nvidia-xconfig -s -a --allow-empty-initial-configuration --cool-bits=12 --registry-dwords="PerfLevelSrc=0x2222" --no-sli --connected-monitor="DFP-0" -o /etc/X11/xorg.conf
+        nvidia-xconfig -a --cool-bits=31 --allow-empty-initial-configuration
       become: true
     - name: add overclock params
       shell: |
-        sed -i '/Driver/a Option "Interactive" "False"' /etc/X11/xorg.conf && sed -i '/    Driver         "nvidia"/ a \ \ \ \ Option         "Coolbits" "28"' /etc/X11/xorg.conf
+        sed -i '/Option "AllowEmptyInitialConfiguration" "True"/a Option "ConnectedMonitor" "DFP-0"' /etc/X11/xorg.conf && sed -i '/Option "ConnectedMonitor" "DFP-0"/a Option "CustomEDID" "DFP-0:/etc/X11/dfp0.edid"' /etc/X11/xorg.conf
+      become: true
+    - name: copy software monitor
+      copy:
+        src: dfp0.edid
+        dest: /etc/X11/dfp0.edid
+      become: true
+    - name: prevent system overwrite config
+      shell: |
+        chattr +i /etc/X11/xorg.conf
       become: true
     - name: restart
       shell: sleep 2 && shutdown -r now

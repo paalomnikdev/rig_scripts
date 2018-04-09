@@ -1,0 +1,48 @@
+- hosts: all
+  tasks:
+    - name: init nvidia config
+      shell: |
+        sudo nvidia-xconfig -a --cool-bits=31 --allow-empty-initial-configuration
+      become: true
+    - name: add overclock params
+      shell: |
+        sed -i '/Option "AllowEmptyInitialConfiguration" "True"/a Option "ConnectedMonitor" "DFP-0"' /etc/X11/xorg.conf && sed -i '/Option "ConnectedMonitor" "DFP-0"/a Option "CustomEDID" "DFP-0:/etc/X11/dfp0.edid"' /etc/X11/xorg.conf
+      become: true
+    - name: copy software monitor
+      copy:
+        src: dfp0.edid
+        dest: /etc/X11/dfp0.edid
+      become: true
+    - name: prevent system overwrite config
+      shell: |
+        chattr +i /etc/X11/xorg.conf
+      become: true
+    - name: restart
+      shell: sleep 2 && shutdown -r now
+      async: 1
+      poll: 0
+      become: true
+      ignore_errors: true
+    - name: waiting for server to come back after reboot
+      local_action: wait_for host={{ ansible_ssh_host }} state=started port={{ ansible_ssh_port }} delay=30 timeout=300 connect_timeout=15
+    - name: add supervisor conf file
+      template:
+        src: miner.conf.j2
+        dest: /etc/supervisor/conf.d/miner.conf
+      become: true
+    - name: fetch last code version
+      shell: |
+        cd /var/www/client && git pull
+    - name: init miner.sh
+      shell: |
+        touch /var/www/client/miner.sh
+    - name: add executable permissions to miner.sh
+      file: dest=/var/www/client/miner.sh mode=a+x
+    - name: restart
+      shell: sleep 2 && shutdown -r now
+      async: 1
+      poll: 0
+      become: true
+      ignore_errors: true
+    - name: waiting for server to come back after reboot
+      local_action: wait_for host={{ ansible_ssh_host }} state=started port={{ ansible_ssh_port }} delay=30 timeout=300 connect_timeout=15
