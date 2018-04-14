@@ -1,6 +1,6 @@
 - hosts: all
   vars:
-    master_node_address: 192.168.31.148
+    master_node_address: 10.23.1.71
   tasks:
     - name: add nvidia repo
       apt_repository:

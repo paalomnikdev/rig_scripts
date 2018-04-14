@@ -6,11 +6,11 @@ index=$(( number_of_gpus[0] - 1 ))
 for i in $(seq 0 $index)
 do
     DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-smi -i $i -pm 1
-    DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-smi -i $i -pl 110
+    DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-smi -i $i -pl 130
     DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-settings -a [gpu:${i}]/GPUMemoryTransferRateOffset[3]=500
     DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-settings -a [gpu:${i}]/GPUGraphicsClockOffset[3]=100
     DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-settings -a [gpu:${i}]/GPUMemoryTransferRateOffset[2]=500
     DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-settings -a [gpu:${i}]/GPUGraphicsClockOffset[2]=100
     DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-settings -a [gpu:${i}]/GPUFanControlState=1
-    DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-settings -a [fan:${i}]/GPUTargetFanSpeed=75
+    DISPLAY=:0 XAUTHORITY=/var/run/lightdm/root/:0 nvidia-settings -a [fan:${i}]/GPUTargetFanSpeed=95
 done
