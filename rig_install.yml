@@ -91,7 +91,7 @@
       become: true
       ignore_errors: true
     - name: waiting for server to come back after reboot
-      local_action: wait_for host={{ ansible_ssh_host }} state=started port={{ ansible_ssh_port }} delay=30 timeout=300 connect_timeout=15
+      local_action: wait_for host={{ ansible_ssh_host }} state=started port={{ ansible_ssh_port }} delay=30 timeout=900 connect_timeout=15
     - name: stop X server
       systemd: state=stopped name=lightdm
       become: true
@@ -119,7 +119,7 @@
       become: true
       ignore_errors: true
     - name: waiting for server to come back after reboot
-      local_action: wait_for host={{ ansible_ssh_host }} state=started port={{ ansible_ssh_port }} delay=30 timeout=300 connect_timeout=15
+      local_action: wait_for host={{ ansible_ssh_host }} state=started port={{ ansible_ssh_port }} delay=30 timeout=900 connect_timeout=15
     - name: create overclock script
       template:
         src: overclock.sh.j2
@@ -141,7 +141,7 @@
       become: true
       ignore_errors: true
     - name: waiting for server to come back after reboot
-      local_action: wait_for host={{ ansible_ssh_host }} state=started port={{ ansible_ssh_port }} delay=30 timeout=300 connect_timeout=15
+      local_action: wait_for host={{ ansible_ssh_host }} state=started port={{ ansible_ssh_port }} delay=30 timeout=900 connect_timeout=15
     - name: remove default nginx vhost
       file:
         state: absent
