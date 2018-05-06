@@ -208,6 +208,11 @@
         src: client.conf.j2
         dest: /etc/supervisor/conf.d/client.conf
       become: true
+    - name: add supervisor conf file
+      template:
+        src: miner.conf.j2
+        dest: /etc/supervisor/conf.d/miner.conf
+      become: true
     - name: restart supervisor
       service: name=supervisor state=restarted
       become: true
